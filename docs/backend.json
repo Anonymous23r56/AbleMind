@@ -36,11 +36,7 @@
       },
       "required": [
         "id",
-        "email",
-        "username",
-        "onboardingContext",
-        "createdAt",
-        "updatedAt"
+        "email"
       ]
     },
     "Session": {
@@ -70,6 +66,24 @@
         "humanAiBalanceScore": {
           "type": "number",
           "description": "The calculated Human-AI Balance Score for this session."
+        },
+        "strengths": {
+            "type": "array",
+            "description": "Cognitive strengths identified in the session.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "weaknesses": {
+            "type": "array",
+            "description": "Cognitive weaknesses identified in the session.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "insights": {
+            "type": "string",
+            "description": "Nuanced insights from the session."
         }
       },
       "required": [
@@ -77,7 +91,10 @@
         "userId",
         "startTime",
         "endTime",
-        "humanAiBalanceScore"
+        "humanAiBalanceScore",
+        "strengths",
+        "weaknesses",
+        "insights"
       ]
     },
     "Challenge": {
@@ -138,8 +155,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
