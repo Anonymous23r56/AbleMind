@@ -63,6 +63,9 @@ export default function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                Dashboard
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/profile')}>
                 Profile
               </DropdownMenuItem>
