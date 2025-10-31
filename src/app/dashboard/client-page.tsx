@@ -10,6 +10,7 @@ import {
 import { collection, query, orderBy } from 'firebase/firestore';
 import type { Session } from '@/lib/entities';
 import { Loader2, Sparkles, ShieldAlert, FileText, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
