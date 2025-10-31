@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +59,12 @@ export default function LoginPage() {
     },
   });
 
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   const handleAuthAction = async (data: UserForm) => {
     setIsLoading(true);
     try {
@@ -69,7 +75,7 @@ export default function LoginPage() {
         await createUserWithEmailAndPassword(auth, data.email, data.password);
         toast({ title: 'Success', description: 'Account created successfully.' });
       }
-      router.push('/profile');
+      // The useEffect will handle the redirect
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -81,17 +87,12 @@ export default function LoginPage() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || user) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  if (user) {
-    router.push('/');
-    return null;
   }
 
   return (
