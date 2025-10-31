@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Briefcase, School, User } from 'lucide-react';
+import { useUser } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 type ContextOption = {
   id: 'Personal' | 'Education' | 'Professional';
@@ -38,13 +40,39 @@ const contextOptions: ContextOption[] = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
 
+  useEffect(() => {
+    // After login, the user is redirected here.
+    // Check if a context was saved before the login redirect.
+    const savedContext = sessionStorage.getItem('ablemind-selected-context');
+    if (user && savedContext) {
+      sessionStorage.removeItem('ablemind-selected-context'); // Clean up
+      router.push(`/assessment?context=${savedContext}`);
+    }
+  }, [user, router]);
+
+
   const handleStart = () => {
-    if (selectedContext) {
+    if (!selectedContext) return;
+
+    if (user) {
       router.push(`/assessment?context=${selectedContext}`);
+    } else {
+      // If user is not logged in, save context and redirect to login.
+      sessionStorage.setItem('ablemind-selected-context', selectedContext);
+      router.push('/login');
     }
   };
+
+  if (isUserLoading) {
+     return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20">
@@ -89,9 +117,10 @@ export default function OnboardingPage() {
         <Button
           size="lg"
           onClick={handleStart}
-          disabled={!selectedContext}
+          disabled={!selectedContext || isUserLoading}
           className="group"
         >
+          { isUserLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null }
           Start Assessment
           <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
         </Button>
