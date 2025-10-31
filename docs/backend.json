@@ -1,0 +1,210 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the AbleMind application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's username."
+        },
+        "onboardingContext": {
+          "type": "string",
+          "description": "The AI usage context selected during onboarding."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username",
+        "onboardingContext",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Session": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Session",
+      "type": "object",
+      "description": "Represents a user session, tracking cognitive challenges and behavioral data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the session entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Session)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the session ended.",
+          "format": "date-time"
+        },
+        "humanAiBalanceScore": {
+          "type": "number",
+          "description": "The calculated Human-AI Balance Score for this session."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "humanAiBalanceScore"
+      ]
+    },
+    "Challenge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Challenge",
+      "type": "object",
+      "description": "Represents a single micro-challenge within a session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the challenge entity."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Reference to Session. (Relationship: Session 1:N Challenge)"
+        },
+        "challengeType": {
+          "type": "string",
+          "description": "Type of cognitive skill assessed by this challenge."
+        },
+        "content": {
+          "type": "string",
+          "description": "The textual or visual content of the challenge."
+        },
+        "userResponse": {
+          "type": "string",
+          "description": "The user's response to the challenge."
+        },
+        "timeSpent": {
+          "type": "number",
+          "description": "Time spent by the user on this challenge (in seconds)."
+        },
+        "hesitation": {
+          "type": "boolean",
+          "description": "Indicates if the user hesitated before responding."
+        },
+        "aiInterpretation": {
+          "type": "string",
+          "description": "The AI's interpretation of the user's response and behavior."
+        },
+        "difficultyLevel": {
+          "type": "number",
+          "description": "The difficulty level of the challenge."
+        }
+      },
+      "required": [
+        "id",
+        "sessionId",
+        "challengeType",
+        "content",
+        "userResponse",
+        "timeSpent",
+        "hesitation",
+        "aiInterpretation",
+        "difficultyLevel"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Uses path-based ownership for private data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/sessions/{sessionId}",
+        "definition": {
+          "entityName": "Session",
+          "schema": {
+            "$ref": "#/backend/entities/Session"
+          },
+          "description": "Stores user sessions. Uses path-based ownership, inheriting authorization from the user document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/sessions/{sessionId}/challenges/{challengeId}",
+        "definition": {
+          "entityName": "Challenge",
+          "schema": {
+            "$ref": "#/backend/entities/Challenge"
+          },
+          "description": "Stores challenges within a session. Uses path-based ownership, inheriting authorization from the session document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the session."
+            },
+            {
+              "name": "challengeId",
+              "description": "The unique identifier for the challenge."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the AbleMind application's core features, focusing on user authentication and session management. It prioritizes Authorization Independence and facilitates secure list operations. The design incorporates structural segregation to simplify security rules and enhance debuggability.\n\nAuthorization Independence is achieved through path-based ownership for user data. Sessions and challenges are stored as subcollections under the user document, eliminating the need for `get()` calls in security rules to verify ownership. This ensures that operations on sessions and challenges are atomic and independent of the user document's state.\n\nQAPs (Rules are not Filters) are supported by using a clear hierarchical path structure. Each collection has well-defined security requirements, making it easy to write rules that prevent unauthorized access to data.\n\nThe structure uses hierarchical paths to represent the relationships between Users, Sessions, and Challenges. This structure makes ownership-based security rules simple and efficient."
+  }
+}

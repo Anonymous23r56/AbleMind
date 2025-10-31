@@ -1,0 +1,119 @@
+/**
+ * @fileoverview Firestore Security Rules for AbleMind application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for all data. Each user has full control over their profile, sessions, and challenges.
+ *
+ * Data Structure:
+ * Data is nested under /users/{userId}, with sessions and challenges as subcollections.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data. Listing all users is disallowed.
+ * - All write operations require a verified, signed-in user.
+ * - Data validation is relaxed in this prototyping phase to allow for rapid iteration.
+ *
+ * Denormalization for Authorization:
+ *  -The `userId` is present in the path for sessions and challenges, eliminating the need to read user documents for authorization.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user profile access.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can get, update, or delete their profile if the userId matches their auth UID.
+     * @deny (create) - Denies creation if the userId does not match the auth UID.
+     * @deny (list) - Denies listing all user profiles.
+     * @deny (update, delete) - Denies updating or deleting if the userId does not match the auth UID.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      // Function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Function to check if the requested userId matches the authenticated user's UID
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Function to check if the user is signed in and is the owner of existing data.
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user session data.
+     * @path /users/{userId}/sessions/{sessionId}
+     * @allow (create) - Authenticated user can create a session under their profile.
+     * @allow (get, list, update, delete) - Authenticated user can get, list, update, or delete sessions under their profile.
+     * @deny (create) - Denies creation if the userId does not match the auth UID.
+     * @deny (update, delete) - Denies updating or deleting if the userId does not match the auth UID.
+     * @principle Enforces document ownership for writes; inherits ownership from the user document.
+     */
+    match /users/{userId}/sessions/{sessionId} {
+      // Function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Function to check if the requested userId matches the authenticated user's UID
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Function to check if the user is signed in and is the owner of existing data.
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages challenge data within user sessions.
+     * @path /users/{userId}/sessions/{sessionId}/challenges/{challengeId}
+     * @allow (create) - Authenticated user can create a challenge within their session.
+     * @allow (get, list, update, delete) - Authenticated user can get, list, update, or delete challenges within their session.
+     * @deny (create) - Denies creation if the userId does not match the auth UID.
+     * @deny (update, delete) - Denies updating or deleting if the userId does not match the auth UID.
+     * @principle Enforces document ownership for writes; inherits ownership from the session document.
+     */
+    match /users/{userId}/sessions/{sessionId}/challenges/{challengeId} {
+      // Function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Function to check if the requested userId matches the authenticated user's UID
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Function to check if the user is signed in and is the owner of existing data.
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.sessionId == sessionId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
