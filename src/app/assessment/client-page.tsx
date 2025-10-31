@@ -81,6 +81,29 @@ export default function AssessmentClientPage() {
     return Math.max(1, Math.min(10, baseScore));
   };
 
+  const handleGenerateReport = async (finalResponses: string[], finalBehavioralData: BehavioralData[]) => {
+    const reportData = {
+      responses: finalResponses,
+      behavioralData: {
+        timeSpent: finalBehavioralData.reduce((acc, b) => acc + b.timeSpent, 0) / finalBehavioralData.length,
+        hesitation: finalBehavioralData.reduce((acc, b) => acc + b.hesitation, 0) / finalBehavioralData.length,
+      },
+      context: context!,
+    };
+
+    const reportResult = await generateReport(reportData);
+    if (reportResult.success && reportResult.report) {
+      try {
+        sessionStorage.setItem('ablemind-report', JSON.stringify(reportResult.report));
+        router.push('/report');
+      } catch (e) {
+        toast({ title: 'Error', description: 'Could not store report data.', variant: 'destructive' });
+      }
+    } else {
+      toast({ title: 'Error', description: reportResult.error, variant: 'destructive' });
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     const endTime = Date.now();
@@ -88,10 +111,11 @@ export default function AssessmentClientPage() {
     const hesitation = firstInteractionTime > 0 ? firstInteractionTime - challengeStartTime : timeSpent;
 
     const newBehavioralData = [...behavioralData, { timeSpent: timeSpent / 1000, hesitation: hesitation / 1000 }];
-    setBehavioralData(newBehavioralData);
-
     const newResponses = [...responses, currentResponse];
+
+    setBehavioralData(newBehavioralData);
     setResponses(newResponses);
+    setCurrentResponse('');
 
     if (currentStep < TOTAL_CHALLENGES - 1) {
       const performance = calculatePerformance(timeSpent);
@@ -101,38 +125,17 @@ export default function AssessmentClientPage() {
         setChallenges([...challenges, result.newChallenge]);
         setDifficulty(result.newDifficulty);
         setCurrentStep(currentStep + 1);
-        setCurrentResponse('');
         setChallengeStartTime(Date.now());
         setFirstInteractionTime(0);
       } else {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
       }
+      setIsSubmitting(false);
     } else {
       // Last challenge, generate report
-      const reportData = {
-        responses: newResponses,
-        behavioralData: {
-          timeSpent: newBehavioralData.reduce((acc, b) => acc + b.timeSpent, 0) / newBehavioralData.length,
-          hesitation: newBehavioralData.reduce((acc, b) => acc + b.hesitation, 0) / newBehavioralData.length,
-        },
-        context: context!,
-      };
-      
-      const reportResult = await generateReport(reportData);
-
-      if (reportResult.success && reportResult.report) {
-        try {
-          sessionStorage.setItem('ablemind-report', JSON.stringify(reportResult.report));
-          router.push('/report');
-        } catch (e) {
-            toast({ title: 'Error', description: 'Could not store report data.', variant: 'destructive' });
-        }
-      } else {
-        toast({ title: 'Error', description: reportResult.error, variant: 'destructive' });
-      }
+      await handleGenerateReport(newResponses, newBehavioralData);
+      // isSubmitting will remain true while we navigate
     }
-
-    setIsSubmitting(false);
   };
   
   const progressValue = useMemo(() => ((currentStep + 1) / TOTAL_CHALLENGES) * 100, [currentStep]);

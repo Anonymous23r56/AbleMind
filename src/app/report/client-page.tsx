@@ -6,6 +6,23 @@ import type { InterpretUserResponsesOutput } from '@/ai/flows/interpret-user-res
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lightbulb, RotateCcw, ShieldAlert, Sparkles } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function LoadingState() {
+  return (
+    <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20 space-y-8">
+        <Skeleton className="h-12 w-3/4 mx-auto" />
+        <Skeleton className="h-4 w-1/2 mx-auto" />
+        <div className="flex justify-center">
+          <Skeleton className="h-48 w-48 rounded-full" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-8 pt-8">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+        </div>
+    </div>
+  );
+}
 
 export default function ReportClientPage() {
   const router = useRouter();
@@ -25,20 +42,27 @@ export default function ReportClientPage() {
         const calculatedScore = total > 0 ? Math.round((strengthsCount / total) * 100) : 50;
         setScore(calculatedScore);
 
-        sessionStorage.removeItem('ablemind-report');
+        // Don't remove the item, in case of a page refresh
+        // sessionStorage.removeItem('ablemind-report'); 
       } catch (e) {
         // Data might be corrupted, redirect home
+        console.error("Failed to parse report data", e);
         router.replace('/');
       }
     } else {
-        // If no report data, maybe they refreshed. Send them home.
-        router.replace('/');
+        // If no report data on initial load, it could be a redirect from assessment.
+        // We'll wait a moment, but if it doesn't show up, they likely refreshed.
+        const timer = setTimeout(() => {
+          if (!sessionStorage.getItem('ablemind-report')) {
+            router.replace('/');
+          }
+        }, 500); // Wait 500ms for session storage to populate on redirect
+        return () => clearTimeout(timer);
     }
   }, [router]);
   
   if (!report) {
-    // This will be shown briefly before redirect. The parent suspense handles the main loading state.
-    return null;
+    return <LoadingState />;
   }
 
   return (
