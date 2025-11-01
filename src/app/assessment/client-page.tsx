@@ -15,11 +15,14 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { getInitialChallenge, submitAndGetNextChallenge, generateReport } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
+import type { GenerateUniqueChallengesOutput } from '@/ai/flows/generate-unique-challenges';
 
 const TOTAL_CHALLENGES = 3;
 
@@ -37,7 +40,7 @@ export default function AssessmentClientPage() {
 
   const [context, setContext] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [challenges, setChallenges] = useState<string[]>([]);
+  const [challenges, setChallenges] = useState<GenerateUniqueChallengesOutput[]>([]);
   const [responses, setResponses] = useState<string[]>([]);
   const [behavioralData, setBehavioralData] = useState<BehavioralData[]>([]);
   const [currentResponse, setCurrentResponse] = useState('');
@@ -84,6 +87,13 @@ export default function AssessmentClientPage() {
       setFirstInteractionTime(Date.now());
     }
     setCurrentResponse(e.target.value);
+  };
+  
+  const handleRadioResponseChange = (value: string) => {
+    if (firstInteractionTime === 0) {
+      setFirstInteractionTime(Date.now());
+    }
+    setCurrentResponse(value);
   };
 
   const calculatePerformance = (timeSpent: number) => {
@@ -193,8 +203,10 @@ export default function AssessmentClientPage() {
     () => ((currentStep + 1) / TOTAL_CHALLENGES) * 100,
     [currentStep]
   );
+  
+  const currentChallenge = challenges[currentStep];
 
-  if (isLoading) {
+  if (isLoading || !currentChallenge) {
     return (
       <div className="container mx-auto max-w-2xl py-12 px-4 md:py-20 animate-fade-in">
         <div className="space-y-4">
@@ -240,16 +252,32 @@ export default function AssessmentClientPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="min-h-[100px]">
-          <p className="text-lg">{challenges[currentStep]}</p>
+          <p className="text-lg">{currentChallenge.challengeText}</p>
         </CardContent>
         <CardFooter className="flex flex-col items-stretch gap-4">
-          <Textarea
-            placeholder="Type your response here..."
-            value={currentResponse}
-            onChange={handleResponseChange}
-            rows={4}
-            disabled={isSubmitting}
-          />
+          {currentChallenge.challengeType === 'open' ? (
+            <Textarea
+              placeholder="Type your response here..."
+              value={currentResponse}
+              onChange={handleResponseChange}
+              rows={4}
+              disabled={isSubmitting}
+            />
+          ) : (
+             <RadioGroup 
+                value={currentResponse} 
+                onValueChange={handleRadioResponseChange}
+                className="space-y-2"
+                disabled={isSubmitting}
+              >
+                {currentChallenge.options?.map((option, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option} id={`option-${index}`} />
+                    <Label htmlFor={`option-${index}`}>{option}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || currentResponse.trim().length === 0}

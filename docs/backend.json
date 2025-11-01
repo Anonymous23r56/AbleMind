@@ -138,6 +138,18 @@
         "difficultyLevel": {
           "type": "number",
           "description": "The difficulty level of the challenge."
+        },
+        "type": {
+            "type": "string",
+            "enum": ["open", "multipleChoice"],
+            "description": "The format of the challenge."
+        },
+        "options": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "A list of options for multiple choice questions."
         }
       },
       "required": [
@@ -149,7 +161,8 @@
         "timeSpent",
         "hesitation",
         "aiInterpretation",
-        "difficultyLevel"
+        "difficultyLevel",
+        "type"
       ]
     }
   },

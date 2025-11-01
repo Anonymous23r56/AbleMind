@@ -8,7 +8,7 @@ import type { InterpretUserResponsesInput } from '@/ai/flows/interpret-user-resp
 export async function getInitialChallenge(aiUsageContext: string) {
   try {
     const result = await generateUniqueChallenges({ aiUsageContext });
-    return { success: true, challenge: result.challenge };
+    return { success: true, challenge: result };
   } catch (error) {
     console.error(error);
     return { success: false, error: 'Failed to generate challenge.' };
@@ -29,7 +29,7 @@ export async function submitAndGetNextChallenge(
     
     return {
       success: true,
-      newChallenge: challengeResult.challenge,
+      newChallenge: challengeResult,
       newDifficulty: difficultyResult.newDifficulty,
       reason: difficultyResult.reason,
     };

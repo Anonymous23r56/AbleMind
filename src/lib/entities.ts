@@ -37,4 +37,6 @@ export interface Challenge {
   hesitation: boolean; // Indicates if the user hesitated before responding.
   aiInterpretation: string; // The AI's interpretation of the user's response and behavior.
   difficultyLevel: number; // The difficulty level of the challenge.
+  type: 'open' | 'multipleChoice'; // The format of the challenge.
+  options?: string[]; // A list of options for multiple choice questions.
 }
