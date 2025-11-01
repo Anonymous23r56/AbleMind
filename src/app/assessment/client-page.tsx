@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
 import type { GenerateUniqueChallengesOutput } from '@/ai/flows/generate-unique-challenges';
 
-const TOTAL_CHALLENGES = 3;
+const TOTAL_CHALLENGES = 5;
 
 type BehavioralData = {
   timeSpent: number; // in s
