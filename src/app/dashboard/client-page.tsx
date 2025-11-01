@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   useFirestore,
@@ -20,6 +21,12 @@ export default function DashboardClientPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
   const sessionsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -34,7 +41,7 @@ export default function DashboardClientPage() {
     error,
   } = useCollection<Session>(sessionsQuery);
 
-  if (isUserLoading || isSessionsLoading) {
+  if (isUserLoading || isSessionsLoading || !user) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -42,11 +49,6 @@ export default function DashboardClientPage() {
     );
   }
 
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
-  
   if (error) {
     return (
         <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20 text-center">
