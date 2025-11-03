@@ -78,10 +78,10 @@ export default function OnboardingPage() {
     <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20">
       <div className="text-center space-y-4 animate-fade-in">
         <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-primary">
-          Discover Your Cognitive Edge
+          Have you gone too deep with AI?
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          AbleMind uses AI-driven micro-challenges to create a personalized map of your cognitive abilities. Start your journey to a sharper mind.
+          Take the AbleMind Test - find out how balanced your intelligence is.
         </p>
       </div>
 
