@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Briefcase, School, User } from 'lucide-react';
+import { ArrowRight, Briefcase, Paintbrush, User } from 'lucide-react';
 import { useUser } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 type ContextOption = {
-  id: 'Personal' | 'Education' | 'Professional';
+  id: 'Personal' | 'Work' | 'Creative';
   title: string;
   description: string;
   icon: React.ElementType;
@@ -20,21 +20,21 @@ type ContextOption = {
 const contextOptions: ContextOption[] = [
   {
     id: 'Personal',
-    title: 'Personal Growth',
+    title: 'Personal',
     description: 'Explore your cognitive skills for self-improvement and daily life.',
     icon: User,
   },
   {
-    id: 'Education',
-    title: 'Academic Success',
-    description: 'Enhance your learning, studying, and critical thinking abilities.',
-    icon: School,
-  },
-  {
-    id: 'Professional',
-    title: 'Career Development',
+    id: 'Work',
+    title: 'Work',
     description: 'Sharpen your mind for professional challenges and workplace excellence.',
     icon: Briefcase,
+  },
+  {
+    id: 'Creative',
+    title: 'Creative',
+    description: 'Enhance your innovative thinking and problem-solving abilities.',
+    icon: Paintbrush,
   },
 ];
 
