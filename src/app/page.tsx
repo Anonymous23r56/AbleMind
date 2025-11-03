@@ -21,7 +21,7 @@ const contextOptions: ContextOption[] = [
   {
     id: 'Personal',
     title: 'Personal',
-    description: 'Explore your cognitive skills for self-improvement and daily life.',
+    description: 'For everyday use (Chats, advice, self-improvement, or curiosity)',
     icon: User,
   },
   {
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
 
       <div className="mt-12 space-y-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
         <h2 className="text-center font-headline text-2xl font-semibold">
-          First, select your primary context
+          Choose how you mostly use AI
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {contextOptions.map((option) => (
