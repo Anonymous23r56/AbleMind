@@ -13,8 +13,17 @@ import type { Session } from '@/lib/entities';
 import { Loader2, Sparkles, ShieldAlert, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+
+const chartConfig = {
+  score: {
+    label: 'Balance Score',
+    color: 'hsl(var(--primary))',
+  },
+} satisfies ChartConfig;
+
 
 export default function DashboardClientPage() {
   const router = useRouter();
@@ -31,7 +40,7 @@ export default function DashboardClientPage() {
     if (!user) return null;
     return query(
       collection(firestore, 'users', user.uid, 'sessions'),
-      orderBy('startTime', 'desc')
+      orderBy('startTime', 'asc') // Changed to ascending for chart order
     );
   }, [firestore, user]);
 
@@ -40,6 +49,14 @@ export default function DashboardClientPage() {
     isLoading: isSessionsLoading,
     error,
   } = useCollection<Session>(sessionsQuery);
+  
+  const chartData = useMemo(() => {
+    if (!sessions) return [];
+    return sessions.map(session => ({
+        date: format(new Date(session.startTime), 'MMM d'),
+        score: session.humanAiBalanceScore,
+    }));
+  }, [sessions]);
 
   if (isUserLoading || isSessionsLoading || !user) {
     return (
@@ -58,6 +75,8 @@ export default function DashboardClientPage() {
     );
   }
 
+  const reversedSessions = sessions ? [...sessions].reverse() : [];
+
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20">
       <div className="space-y-4 mb-12">
@@ -69,9 +88,60 @@ export default function DashboardClientPage() {
         </p>
       </div>
 
-      {sessions && sessions.length > 0 ? (
+      {sessions && sessions.length > 1 && (
+         <Card className="mb-8">
+            <CardHeader>
+                <CardTitle>Your Progress</CardTitle>
+                <CardDescription>
+                    Your Human-AI Balance Score over time.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <ResponsiveContainer>
+                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis 
+                                dataKey="date" 
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                tickFormatter={(value) => value.slice(0, 6)}
+                            />
+                            <YAxis 
+                                domain={[0, 100]}
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                width={30}
+                            />
+                            <ChartTooltip 
+                                cursor={false}
+                                content={<ChartTooltipContent indicator="dot" />} 
+                            />
+                            <Line 
+                                dataKey="score" 
+                                type="monotone"
+                                stroke="var(--color-score)" 
+                                strokeWidth={2} 
+                                dot={{
+                                    fill: "var(--color-score)",
+                                }}
+                                activeDot={{
+                                    r: 6,
+                                }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+         </Card>
+      )}
+
+      {reversedSessions && reversedSessions.length > 0 ? (
         <div className="space-y-8">
-          {sessions.map((session) => (
+          <h2 className="font-headline text-3xl font-bold">Assessment History</h2>
+          {reversedSessions.map((session) => (
             <Card key={session.id} className="animate-fade-in">
               <CardHeader className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="md:col-span-2 space-y-1.5">
