@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -81,7 +82,7 @@ export default function OnboardingPage() {
           Have you gone too deep with AI?
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Take the AbleMind Test - find out how balanced your intelligence is.
+          Take the AbleMind test - a digital mirror that reveals how much of your creativity, instinct and logic still comes from you
         </p>
       </div>
 
