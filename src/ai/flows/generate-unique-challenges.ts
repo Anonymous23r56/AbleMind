@@ -32,9 +32,9 @@ const generateUniqueChallengesPrompt = ai.definePrompt({
 
 The micro-challenge should be designed to assess a user's cognitive skills in a way that is relevant to the specified context.
 
-You must generate a mix of question types. Sometimes, create a short, open-ended question. Other times, create a multiple-choice question with 3 to 4 plausible options.
+You must generate a mix of question types. Sometimes, create a short, open-ended question. Other times, create a multiple-choice question with 3 to 4 plausible options. You can also generate a short logic puzzle or a riddle.
 
-- For open-ended questions, set 'challengeType' to 'open' and provide the question in 'challengeText'.
+- For open-ended questions, logic puzzles, or riddles, set 'challengeType' to 'open' and provide the question in 'challengeText'.
 - For multiple-choice questions, set 'challengeType' to 'multipleChoice', provide the question in 'challengeText', and provide an array of strings in the 'options' field.
 
 The question should be short and focused, not packed with too much information.
