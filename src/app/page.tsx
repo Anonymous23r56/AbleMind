@@ -27,7 +27,7 @@ const contextOptions: ContextOption[] = [
   {
     id: 'Work',
     title: 'Work',
-    description: 'Sharpen your mind for professional challenges and workplace excellence.',
+    description: 'For boosting productivity, research, writing, or problem solving at your job or business',
     icon: Briefcase,
   },
   {
