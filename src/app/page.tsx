@@ -33,7 +33,7 @@ const contextOptions: ContextOption[] = [
   {
     id: 'Creative',
     title: 'Creative',
-    description: 'Enhance your innovative thinking and problem-solving abilities.',
+    description: 'For ideas, design, storytelling or artistic expression with AI as your co-creator',
     icon: Paintbrush,
   },
 ];
