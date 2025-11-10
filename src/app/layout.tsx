@@ -1,9 +1,11 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 import AppHeader from '@/components/app-header';
 import { FirebaseClientProvider } from '@/firebase';
+import AppFooter from '@/components/app-footer';
 
 export const metadata: Metadata = {
   title: 'AbleMind - Assess Your Cognitive Skills',
@@ -28,6 +30,7 @@ export default function RootLayout({
           <main className="flex-grow">
             {children}
           </main>
+          <AppFooter />
           <Toaster />
         </FirebaseClientProvider>
       </body>
