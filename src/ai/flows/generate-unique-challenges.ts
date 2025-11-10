@@ -18,7 +18,7 @@ const GenerateUniqueChallengesInputSchema = z.object({
 export type GenerateUniqueChallengesInput = z.infer<typeof GenerateUniqueChallengesInputSchema>;
 
 const GenerateUniqueChallengesOutputSchema = z.object({
-  challengeType: z.enum(['open', 'multipleChoice']).describe('The type of challenge.'),
+  challengeType: z.string().describe("The type of challenge, either 'open' or 'multipleChoice'."),
   challengeText: z.string().describe('The main text of the micro-challenge.'),
   options: z.array(z.string()).optional().describe('An array of options for multiple-choice questions.')
 });
