@@ -23,24 +23,41 @@ export default function AdminClientPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
 
   useEffect(() => {
-    if (!isUserLoading && !isProfileLoading) {
-      if (!user) {
-        router.push('/login');
-      } else if (!userProfile?.isAdmin) {
-        router.push('/dashboard');
-      }
+    if (isUserLoading || isProfileLoading) {
+      // Still loading, do nothing yet.
+      return;
+    }
+
+    if (!user) {
+      // If not logged in after loading, redirect to login.
+      router.push('/login');
+    } else if (!userProfile?.isAdmin) {
+      // If logged in but not an admin after loading, redirect to dashboard.
+      router.push('/dashboard');
     }
   }, [isUserLoading, isProfileLoading, user, userProfile, router]);
 
   const usersQuery = useMemoFirebase(() => {
+    // Only create the query if we know the user is an admin
     if (!userProfile?.isAdmin) return null;
     return collection(firestore, 'users');
-  }, [firestore, userProfile]);
+  }, [firestore, userProfile?.isAdmin]);
 
   const { data: users, isLoading: isUsersLoading, error } = useCollection<User>(usersQuery);
 
-  if (isUserLoading || isProfileLoading || !userProfile?.isAdmin || isUsersLoading) {
+  // The main loading condition now also waits for the profile to be explicitly loaded
+  if (isUserLoading || isProfileLoading) {
     return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // If, after loading, the user is not an admin, we can show a brief message
+  // before the redirect effect kicks in, or just show the loader.
+  if (!userProfile?.isAdmin) {
+     return (
       <div className="flex justify-center items-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
@@ -52,6 +69,14 @@ export default function AdminClientPage() {
       <div className="container mx-auto max-w-4xl py-12 px-4 md:py-20 text-center">
         <h2 className="text-2xl font-semibold text-destructive">An error occurred</h2>
         <p className="text-muted-foreground mt-2">{error.message}</p>
+      </div>
+    );
+  }
+  
+  if (isUsersLoading) {
+     return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -87,7 +112,7 @@ export default function AdminClientPage() {
                   <TableCell className="font-medium">{u.email}</TableCell>
                   <TableCell className="text-muted-foreground">{u.id}</TableCell>
                   <TableCell>
-                    {u.isAdmin && <Badge>Admin</Badge>}
+                    {u.isAdmin ? <Badge>Admin</Badge> : <Badge variant="secondary">User</Badge>}
                   </TableCell>
                 </TableRow>
               ))}
