@@ -2,15 +2,16 @@
  * @fileoverview Firestore Security Rules for AbleMind application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for all data. Each user has full control over their profile, sessions, and challenges.
+ * This ruleset enforces a strict user-ownership model for most data. An `isAdmin` flag on a user's
+ * document grants elevated privileges, such as the ability to read all user documents.
  *
  * Data Structure:
  * Data is nested under /users/{userId}, with sessions and challenges as subcollections.
  *
  * Key Security Decisions:
- * - Users can only access their own data. Listing all users is disallowed.
+ * - Users can only access their own data, unless they are an admin.
+ * - Admins can read all user profiles.
  * - All write operations require a verified, signed-in user.
- * - Data validation is relaxed in this prototyping phase to allow for rapid iteration.
  *
  * Denormalization for Authorization:
  *  -The `userId` is present in the path for sessions and challenges, eliminating the need to read user documents for authorization.
@@ -23,11 +24,10 @@ service cloud.firestore {
      * @description Manages user profile access.
      * @path /users/{userId}
      * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (get, update, delete) - Authenticated user can get, update, or delete their profile if the userId matches their auth UID.
-     * @deny (create) - Denies creation if the userId does not match the auth UID.
-     * @deny (list) - Denies listing all user profiles.
-     * @deny (update, delete) - Denies updating or deleting if the userId does not match the auth UID.
-     * @principle Enforces document ownership for writes.
+     * @allow (get) - Authenticated user can get their profile, or an admin can get any profile.
+     * @allow (list) - An admin can list all user profiles.
+     * @allow (update, delete) - Authenticated user can update or delete their profile.
+     * @principle Enforces document ownership for writes and admin-level access for reads.
      */
     match /users/{userId} {
       // Function to check if the user is signed in
@@ -45,8 +45,13 @@ service cloud.firestore {
           return isOwner(userId) && resource != null;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if false;
+      // Function to check if the requesting user is an admin.
+      function isAdmin() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      }
+
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);

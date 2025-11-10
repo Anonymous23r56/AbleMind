@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AppLogo } from './app-logo';
-import { useUser } from '@/firebase';
+import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
@@ -16,11 +16,21 @@ import {
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { doc } from 'firebase/firestore';
+import type { User } from '@/lib/entities';
 
 export default function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<User>(userProfileRef);
 
   const handleLogout = async () => {
     try {
@@ -63,6 +73,11 @@ export default function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {userProfile?.isAdmin && (
+                <DropdownMenuItem onClick={() => router.push('/admin')}>
+                  Admin
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                 Dashboard
               </DropdownMenuItem>

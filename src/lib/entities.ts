@@ -6,6 +6,7 @@ export interface User {
   email: string; // User's email address.
   username?: string; // User's username.
   onboardingContext?: string; // The AI usage context selected during onboarding.
+  isAdmin?: boolean; // Indicates if the user has administrative privileges.
   createdAt?: string; // Timestamp indicating when the user account was created.
   updatedAt?: string; // Timestamp indicating when the user account was last updated.
 }
