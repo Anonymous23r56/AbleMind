@@ -71,14 +71,39 @@ const adjustChallengeDifficultyFlow = ai.defineFlow(
     outputSchema: AdjustChallengeDifficultyOutputSchema,
   },
   async input => {
-    const {output} = await adjustChallengeDifficultyPrompt(input);
-    if (!output || typeof output.newDifficulty !== 'number') {
-      throw new Error("The AI model did not return a valid new difficulty level.");
+    try {
+        const {output} = await adjustChallengeDifficultyPrompt(input);
+        if (!output || typeof output.newDifficulty !== 'number') {
+          throw new Error("AI did not return a valid difficulty.");
+        }
+        
+        // Failsafe logic to clamp the difficulty value
+        output.newDifficulty = Math.max(1, Math.min(10, Math.round(output.newDifficulty)));
+        
+        return output;
+
+    } catch (error) {
+        console.warn("AI difficulty adjustment failed, using manual fallback.", error);
+
+        // Failsafe logic: Manually calculate the difficulty if the AI fails.
+        let newDifficulty = input.currentDifficulty;
+        let reason = "Difficulty remains the same due to consistent performance.";
+
+        if (input.userPerformance >= 8) {
+            newDifficulty += 1;
+            reason = "Difficulty increased due to strong performance.";
+        } else if (input.userPerformance <= 4) {
+            newDifficulty -= 1;
+            reason = "Difficulty decreased to better match performance level.";
+        }
+
+        // Clamp the difficulty between 1 and 10
+        newDifficulty = Math.max(1, Math.min(10, newDifficulty));
+
+        return {
+            newDifficulty: newDifficulty,
+            reason: reason,
+        };
     }
-    
-    // Failsafe logic to clamp the difficulty value
-    output.newDifficulty = Math.max(1, Math.min(10, Math.round(output.newDifficulty)));
-    
-    return output;
   }
 );
