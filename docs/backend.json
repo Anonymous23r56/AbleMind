@@ -23,10 +23,6 @@
           "type": "string",
           "description": "The AI usage context selected during onboarding."
         },
-        "isAdmin": {
-          "type": "boolean",
-          "description": "Indicates if the user has administrative privileges."
-        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp indicating when the user account was created.",
@@ -40,8 +36,7 @@
       },
       "required": [
         "id",
-        "email",
-        "isAdmin"
+        "email"
       ]
     },
     "Session": {

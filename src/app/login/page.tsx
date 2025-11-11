@@ -85,7 +85,6 @@ export default function LoginPage() {
         await setDoc(userDocRef, {
           id: newUser.uid,
           email: newUser.email,
-          isAdmin: false, // Default to not admin
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });

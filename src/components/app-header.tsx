@@ -22,15 +22,12 @@ import type { User } from '@/lib/entities';
 export default function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc<User>(userProfileRef);
+  const getInitials = (email: string | null | undefined) => {
+    if (!email) return 'U';
+    return email.substring(0, 2).toUpperCase();
+  };
 
   const handleLogout = async () => {
     try {
@@ -39,11 +36,6 @@ export default function AppHeader() {
     } catch (error) {
       console.error('Error signing out: ', error);
     }
-  };
-  
-  const getInitials = (email: string | null | undefined) => {
-    if (!email) return 'U';
-    return email.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -73,11 +65,6 @@ export default function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {userProfile?.isAdmin && (
-                <DropdownMenuItem onClick={() => router.push('/admin')}>
-                  Admin
-                </DropdownMenuItem>
-              )}
               <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                 Dashboard
               </DropdownMenuItem>
