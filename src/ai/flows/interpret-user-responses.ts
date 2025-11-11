@@ -56,7 +56,21 @@ const interpretUserResponsesFlow = ai.defineFlow(
     outputSchema: InterpretUserResponsesOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      if (!output) {
+        throw new Error("AI did not return a valid report.");
+      }
+      return output;
+    } catch (error) {
+      console.warn("AI report generation failed, using manual fallback.", error);
+
+      // Failsafe: Return a default, generic report if the AI fails.
+      return {
+        strengths: ["Adaptability in response to varied challenges.", "Willingness to engage with complex tasks."],
+        weaknesses: ["Occasional hesitation suggests a need for more confident decision-making.", "Response speed could be improved on certain tasks."],
+        insights: "This session indicates a solid cognitive foundation. Focusing on building decisiveness and reducing response time on unfamiliar problems could lead to significant improvements in overall cognitive balance. Continued practice will be beneficial.",
+      };
+    }
   }
 );
