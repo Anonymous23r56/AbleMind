@@ -12,6 +12,7 @@
  * - Users can only access their own data, unless they are an admin.
  * - Admins can read all user profiles.
  * - All write operations require a verified, signed-in user.
+ * - Users cannot make themselves admins.
  *
  * Denormalization for Authorization:
  *  -The `userId` is present in the path for sessions and challenges, eliminating the need to read user documents for authorization.
@@ -23,11 +24,12 @@ service cloud.firestore {
     /**
      * @description Manages user profile access.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID.
+     * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID and they are not trying to make themselves an admin.
      * @allow (get) - Authenticated user can get their profile, or an admin can get any profile.
      * @allow (list) - An admin can list all user profiles.
-     * @allow (update, delete) - Authenticated user can update or delete their profile.
-     * @principle Enforces document ownership for writes and admin-level access for reads.
+     * @allow (update) - Authenticated user can update their profile, but not change their isAdmin status.
+     * @allow (delete) - Authenticated user can delete their profile.
+     * @principle Enforces document ownership for writes and admin-level access for reads. Prevents privilege escalation.
      */
     match /users/{userId} {
       // Function to check if the user is signed in
@@ -52,8 +54,8 @@ service cloud.firestore {
 
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.isAdmin == false;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id && request.resource.data.isAdmin == resource.data.isAdmin;
       allow delete: if isExistingOwner(userId);
     }
 

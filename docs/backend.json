@@ -40,7 +40,8 @@
       },
       "required": [
         "id",
-        "email"
+        "email",
+        "isAdmin"
       ]
     },
     "Session": {

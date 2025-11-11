@@ -6,10 +6,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
-  Auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +30,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -46,6 +46,7 @@ type UserForm = z.infer<typeof formSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +73,23 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, data.email, data.password);
         toast({ title: 'Success', description: 'Logged in successfully.' });
       } else {
-        await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+        const newUser = userCredential.user;
+        
+        // Create user profile in Firestore
+        const userDocRef = doc(firestore, 'users', newUser.uid);
+        await setDoc(userDocRef, {
+          id: newUser.uid,
+          email: newUser.email,
+          isAdmin: false, // Default to not admin
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        
         toast({ title: 'Success', description: 'Account created successfully.' });
       }
       // The useEffect will handle the redirect
