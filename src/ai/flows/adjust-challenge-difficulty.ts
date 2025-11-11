@@ -14,11 +14,11 @@ import {z} from 'genkit';
 const AdjustChallengeDifficultyInputSchema = z.object({
   currentDifficulty: z
     .number()
-    .describe('The current difficulty level of the micro-challenges (e.g., 1-10).'),
+    .describe('The current difficulty level of the micro-challenges (1-10).'),
   userPerformance: z
     .number()
     .describe(
-      'A numerical representation of the user performance on the previous challenge (e.g., accuracy, speed).'
+      'A score from 1-10 representing user performance on the previous challenge. 1 is poor, 10 is excellent.'
     ),
   challengeType: z
     .string()
@@ -29,10 +29,10 @@ export type AdjustChallengeDifficultyInput = z.infer<typeof AdjustChallengeDiffi
 const AdjustChallengeDifficultyOutputSchema = z.object({
   newDifficulty: z
     .number()
-    .describe('The recommended difficulty level for the next micro-challenge.'),
+    .describe('The recommended difficulty level for the next micro-challenge (must be between 1 and 10).'),
   reason: z
     .string()
-    .describe('The reason for the adjustment in difficulty level.'),
+    .describe('A brief explanation for the difficulty adjustment.'),
 });
 export type AdjustChallengeDifficultyOutput = z.infer<typeof AdjustChallengeDifficultyOutputSchema>;
 
@@ -46,14 +46,21 @@ const adjustChallengeDifficultyPrompt = ai.definePrompt({
   name: 'adjustChallengeDifficultyPrompt',
   input: {schema: AdjustChallengeDifficultyInputSchema},
   output: {schema: AdjustChallengeDifficultyOutputSchema},
-  prompt: `You are an AI that dynamically adjusts the difficulty of micro-challenges during a cognitive assessment. Based on the user's performance on the previous challenge, you should adjust the difficulty level for the next challenge to keep the user engaged and appropriately challenged.
+  prompt: `You are a difficulty adjustment algorithm. Your task is to calculate a new difficulty level based on the provided data.
 
-Consider the following factors when adjusting the difficulty:
-* Current Difficulty: {{{currentDifficulty}}}
-* User Performance: {{{userPerformance}}}
-* Challenge Type: {{{challengeType}}}
+RULES:
+1.  Start with the current difficulty: {{{currentDifficulty}}}.
+2.  Analyze the user's performance score: {{{userPerformance}}}.
+3.  If performance is 8 or higher, INCREASE difficulty by 1.
+4.  If performance is 4 or lower, DECREASE difficulty by 1.
+5.  If performance is between 5 and 7, KEEP the same difficulty.
+6.  The new difficulty MUST NOT go below 1 or above 10.
+7.  Provide a brief, one-sentence reason for your decision.
 
-Reason your decision step by step. Based on the reasoning provide a new difficulty between 1 and 10 and the reason for the difficulty adjustment. Return as a JSON object.
+Your response MUST be a single JSON object with 'newDifficulty' and 'reason' fields.
+
+Current Difficulty: {{{currentDifficulty}}}
+User Performance: {{{userPerformance}}}
 `,
 });
 
@@ -65,6 +72,13 @@ const adjustChallengeDifficultyFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await adjustChallengeDifficultyPrompt(input);
-    return output!;
+    if (!output || typeof output.newDifficulty !== 'number') {
+      throw new Error("The AI model did not return a valid new difficulty level.");
+    }
+    
+    // Failsafe logic to clamp the difficulty value
+    output.newDifficulty = Math.max(1, Math.min(10, Math.round(output.newDifficulty)));
+    
+    return output;
   }
 );

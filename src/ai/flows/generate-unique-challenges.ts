@@ -22,6 +22,7 @@ export type GenerateUniqueChallengesInput = z.infer<typeof GenerateUniqueChallen
 // The challengeType will be determined based on the presence of options.
 const GenerateUniqueChallengesOutputSchema = z.object({
   challengeText: z.string().describe('The main text of the micro-challenge.'),
+
   options: z
     .array(z.string())
     .optional()
@@ -31,12 +32,16 @@ const GenerateUniqueChallengesOutputSchema = z.object({
   challengeType: z
     .string()
     .describe("The type of challenge, either 'open' or 'multipleChoice'."),
+
+  options: z.array(z.string()).optional().describe('An array of 3 to 4 plausible options for multiple-choice questions.')
+
 });
 export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChallengesOutputSchema>;
 
 const generateUniqueChallengesPrompt = ai.definePrompt({
   name: 'generateUniqueChallengesPrompt',
   input: {schema: GenerateUniqueChallengesInputSchema},
+<<<<<<< HEAD
   // The output schema for the prompt itself is simpler. We'll add the challengeType in the flow.
   output: {
     schema: z.object({
@@ -56,6 +61,21 @@ You must generate one of two types of questions:
 - For a multiple-choice question, provide the 'challengeText' and an array of strings in the 'options' field.
 
 The question must be short and focused.
+=======
+  output: {schema: GenerateUniqueChallengesOutputSchema},
+  prompt: `You are an AI that creates a single, concise micro-challenge. The challenge must be relevant to this AI usage context: {{{aiUsageContext}}}.
+
+RULES:
+1.  The challenge must be a single question or task.
+2.  You MUST decide if the question is open-ended or multiple-choice.
+3.  If it is multiple-choice, you MUST provide 3 to 4 plausible options in the 'options' array.
+4.  If it is open-ended, the 'options' array MUST be empty or not present.
+5.  Set 'challengeType' to 'multipleChoice' if you provide options.
+6.  Set 'challengeType' to 'open' if you do not provide options.
+7.  The challenge text must be short and clear.
+
+Your entire response must be a single JSON object that perfectly matches the required output schema.
+>>>>>>> 68a43dd (okay so the assessment loads now but it just all of a suddens says error)
 `,
 });
 
@@ -67,6 +87,7 @@ const generateUniqueChallengesFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await generateUniqueChallengesPrompt(input);
+<<<<<<< HEAD
     if (!output) {
       throw new Error('Failed to get a response from the AI model.');
     }
@@ -80,6 +101,24 @@ const generateUniqueChallengesFlow = ai.defineFlow(
       options: output.options,
       challengeType: challengeType,
     };
+=======
+    
+    if (!output) {
+      throw new Error("The AI model did not return a valid challenge.");
+    }
+    
+    // Failsafe logic: Ensure the challengeType is consistent with the options provided.
+    const hasOptions = output.options && output.options.length > 0;
+    
+    if (hasOptions) {
+      output.challengeType = 'multipleChoice';
+    } else {
+      output.challengeType = 'open';
+      delete output.options; // Clean up empty array if present
+    }
+
+    return output;
+>>>>>>> 68a43dd (okay so the assessment loads now but it just all of a suddens says error)
   }
 );
 
