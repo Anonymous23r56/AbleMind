@@ -9,7 +9,7 @@ export default function AppFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4 md:col-span-1">
             <AppLogo />
-            <p className="text-sm text-muted-foreground">Built by Nova Team 3</p>
+            <p className="text-sm text-muted-foreground">Built by Nova Team 3 (Programmify PIP4)</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:col-span-3">
             <div className="space-y-3">
