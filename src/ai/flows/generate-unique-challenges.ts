@@ -18,17 +18,14 @@ const GenerateUniqueChallengesInputSchema = z.object({
 });
 export type GenerateUniqueChallengesInput = z.infer<typeof GenerateUniqueChallengesInputSchema>;
 
-// The output schema is corrected to define 'options' and 'challengeType' once.
 const GenerateUniqueChallengesOutputSchema = z.object({
   challengeText: z.string().describe('The main text of the micro-challenge.'),
-
   options: z
     .array(z.string())
     .optional()
     .describe('An array of 3 to 4 plausible options for multiple-choice questions.'),
-    
   challengeType: z
-    .enum(['open', 'multipleChoice']) // Use enum for stricter type checking
+    .enum(['open', 'multipleChoice'])
     .describe("The type of challenge, either 'open' or 'multipleChoice'."),
 });
 export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChallengesOutputSchema>;
@@ -36,10 +33,7 @@ export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChalle
 const generateUniqueChallengesPrompt = ai.definePrompt({
   name: 'generateUniqueChallengesPrompt',
   input: {schema: GenerateUniqueChallengesInputSchema},
-
-  // Use the full final output schema to ensure the model returns what is expected.
-  output: {schema: GenerateUniqueChallengesOutputSchema, format: 'json'},
-  
+  output: {schema: GenerateUniqueChallengesOutputSchema},
   prompt: `You are an AI that creates a single, concise micro-challenge. The challenge must be relevant to this AI usage context: {{{aiUsageContext}}}.
 
 RULES:
