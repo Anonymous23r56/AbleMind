@@ -63,26 +63,11 @@ const generateUniqueChallengesFlow = ai.defineFlow(
   },
   async input => {
     try {
-      // The prompt now handles generating the challengeType
       const {output} = await generateUniqueChallengesPrompt(input);
-      
-      if (!output || !output.challengeText) {
-        throw new Error("The AI model did not return a valid challenge.");
+      if (!output) {
+        throw new Error('The AI model did not return a valid challenge.');
       }
-      
-      // Failsafe logic (from local commit) to ensure challengeType is consistent with options.
-      const hasOptions = output.options && output.options.length > 0;
-      
-      if (hasOptions) {
-        output.challengeType = 'multipleChoice';
-      } else {
-        output.challengeType = 'open';
-        // Ensure options is not present if it's an open question (clean up an empty array if the model incorrectly returns one)
-        delete output.options; 
-      }
-
-      return output as GenerateUniqueChallengesOutput;
-
+      return output;
     } catch (error) {
       console.warn("AI challenge generation failed, using manual fallback.", error);
 

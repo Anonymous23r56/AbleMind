@@ -74,13 +74,9 @@ const adjustChallengeDifficultyFlow = ai.defineFlow(
   async input => {
     try {
         const {output} = await adjustChallengeDifficultyPrompt(input);
-        if (!output || typeof output.newDifficulty !== 'number') {
+        if (!output) {
           throw new Error("AI did not return a valid difficulty.");
         }
-        
-        // Failsafe logic to clamp the difficulty value
-        output.newDifficulty = Math.max(1, Math.min(10, Math.round(output.newDifficulty)));
-        
         return output;
 
     } catch (error) {
