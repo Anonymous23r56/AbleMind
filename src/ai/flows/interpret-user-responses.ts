@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -35,7 +36,7 @@ export async function interpretUserResponses(input: InterpretUserResponsesInput)
 const prompt = ai.definePrompt({
   name: 'interpretUserResponsesPrompt',
   input: {schema: InterpretUserResponsesInputSchema},
-  output: {schema: InterpretUserResponsesOutputSchema},
+  output: {schema: InterpretUserResponsesOutputSchema, format: 'json'},
   prompt: `You are an AI agent specializing in interpreting user responses and behavioral data to provide nuanced insights into their cognitive strengths and weaknesses.
 
   Based on the user's responses: {{{responses}}} and behavioral data (time spent: {{{behavioralData.timeSpent}}}, hesitation: {{{behavioralData.hesitation}}}), and the AI usage context: {{{context}}}, identify the user's cognitive strengths and weaknesses, and provide nuanced insights into their cognitive profile.

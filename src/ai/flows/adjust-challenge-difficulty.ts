@@ -46,7 +46,7 @@ export async function adjustChallengeDifficulty(
 const adjustChallengeDifficultyPrompt = ai.definePrompt({
   name: 'adjustChallengeDifficultyPrompt',
   input: {schema: AdjustChallengeDifficultyInputSchema},
-  output: {schema: AdjustChallengeDifficultyOutputSchema},
+  output: {schema: AdjustChallengeDifficultyOutputSchema, format: 'json'},
   prompt: `You are a difficulty adjustment algorithm. Your task is to calculate a new difficulty level based on the provided data.
 
 RULES:

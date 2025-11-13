@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -37,7 +38,7 @@ const generateUniqueChallengesPrompt = ai.definePrompt({
   input: {schema: GenerateUniqueChallengesInputSchema},
 
   // Use the full final output schema to ensure the model returns what is expected.
-  output: {schema: GenerateUniqueChallengesOutputSchema},
+  output: {schema: GenerateUniqueChallengesOutputSchema, format: 'json'},
   
   prompt: `You are an AI that creates a single, concise micro-challenge. The challenge must be relevant to this AI usage context: {{{aiUsageContext}}}.
 
