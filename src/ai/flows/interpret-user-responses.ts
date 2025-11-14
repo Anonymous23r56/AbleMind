@@ -9,7 +9,7 @@
  * - InterpretUserResponsesOutput - The return type for the interpretUserResponses function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from '@/ai';
 import {z} from 'genkit';
 
 const InterpretUserResponsesInputSchema = z.object({
@@ -43,10 +43,7 @@ const prompt = ai.definePrompt({
   Responses represent the answers to a set of micro-challenges that tested the user's cognitive abilities.
   Behavioral data was collected as the user completed these challenges. Specifically, time spent represents the number of seconds the user spent on each challenge, and hesitation is a measure of how much the user hesitated before responding to each challenge. The AI usage context represents whether the user intends to use the results of this assessment in the context of education, their profession, or their personal life.
 
-  Provide your response in JSON format with the following keys:
-  - strengths: An array of strings representing the user's cognitive strengths.
-  - weaknesses: An array of strings representing the user's cognitive weaknesses.
-  - insights: A string providing nuanced insights into the user's cognitive profile.
+  Provide your response in JSON format that conforms to the provided schema.
   `,
 });
 

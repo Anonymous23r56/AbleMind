@@ -1,7 +1,7 @@
 
 'use server';
 
-import { ai } from '@/ai/genkit';
+import { ai } from '@/ai';
 import { z } from 'genkit';
 
 // --- SCHEMAS ---
@@ -25,11 +25,9 @@ export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChalle
 
 const generateUniqueChallengesPrompt = ai.definePrompt({
   name: 'generateUniqueChallengesPrompt',
-  model: 'googleai/gemini-1.5-flash', 
   input: { schema: GenerateUniqueChallengesInputSchema },
   output: { 
     schema: GenerateUniqueChallengesOutputSchema,
-    format: 'json' 
   },
   config: {
     temperature: 1.0, 
@@ -45,7 +43,7 @@ const generateUniqueChallengesPrompt = ai.definePrompt({
     3. IF 'open': 'options' must be empty.
     4. Keep it concise.
 
-    Output strictly valid JSON.
+    Output strictly valid JSON that conforms to the provided schema.
   `,
 });
 
@@ -75,8 +73,7 @@ const generateUniqueChallengesFlow = ai.defineFlow(
       return output;
     } catch (error) {
       console.error("AI Challenge Generation Failed:", error);
-
-      // --- THE FIX IS BELOW ---
+      
       // We explicitly cast this object to satisfy the strict TypeScript schema
       return {
         challengeType: 'multipleChoice',
