@@ -1,6 +1,18 @@
 
 'use server';
 
+/**
+ * @fileOverview A flow that generates unique micro-challenges for the AbleMind assessment.
+ *
+ * This file defines the AI-powered flow for creating personalized micro-challenges
+ * based on a user's selected AI usage context. It includes a random seed to
+ * ensure that the generated challenges are unique for each session.
+ *
+ * - generateUniqueChallenges: The main function exported to be used by server actions.
+ * - GenerateUniqueChallengesInput: The Zod schema for the input to the flow.
+ * - GenerateUniqueChallengesOutput: The Zod schema for the output from the flow.
+ */
+
 import { ai } from '@/ai';
 import { z } from 'genkit';
 
@@ -26,7 +38,7 @@ export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChalle
 const generateUniqueChallengesPrompt = ai.definePrompt({
   name: 'generateUniqueChallengesPrompt',
   input: { schema: GenerateUniqueChallengesInputSchema },
-  output: { 
+  output: {
     schema: GenerateUniqueChallengesOutputSchema,
   },
   config: {
@@ -57,7 +69,7 @@ const generateUniqueChallengesFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // Inject randomness
+      // Inject randomness to ensure a different challenge is generated each time.
       const inputWithSeed = {
         ...input,
         randomSeed: input.randomSeed || Math.random(), 
@@ -74,16 +86,21 @@ const generateUniqueChallengesFlow = ai.defineFlow(
     } catch (error) {
       console.error("AI Challenge Generation Failed:", error);
       
-      // We explicitly cast this object to satisfy the strict TypeScript schema
+      // Return a failsafe question if the AI call fails for any reason.
+      // We explicitly cast this object to satisfy the strict TypeScript schema.
       return {
         challengeType: 'multipleChoice',
-        challengeText: 'Which of the following is a common application of AI?',
-        options: ['Sending an email', 'Voice assistants', 'Setting an alarm', 'Typing a document'],
+        challengeText: 'Which of the following is a common application of AI in daily life?',
+        options: ['Sending an email', 'Voice assistants (like Siri or Alexa)', 'Setting a standard alarm clock', 'Typing a document in a text editor'],
       } as GenerateUniqueChallengesOutput;
     }
   }
 );
 
+/**
+ * The main exported function that server actions should call.
+ * This correctly invokes the Genkit flow to generate a challenge.
+ */
 export async function generateUniqueChallenges(input: GenerateUniqueChallengesInput): Promise<GenerateUniqueChallengesOutput> {
   return generateUniqueChallengesFlow(input);
 }
