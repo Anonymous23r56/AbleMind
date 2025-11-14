@@ -94,10 +94,10 @@ export default function OnboardingPage() {
           {contextOptions.map((option) => (
             <Card
               key={option.id}
-              onClick={() => setSelectedContext(option.id)}
+              onClick={() => setSelectedContext(option.title)}
               className={cn(
                 'cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1',
-                selectedContext === option.id
+                selectedContext === option.title
                   ? 'ring-2 ring-primary shadow-lg border-primary'
                   : 'border-border'
               )}
