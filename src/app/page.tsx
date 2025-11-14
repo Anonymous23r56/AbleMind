@@ -43,6 +43,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
+  const [selectedContextTitle, setSelectedContextTitle] = useState<string | null>(null);
 
   useEffect(() => {
     // After login, the user is redirected here.
@@ -50,7 +51,7 @@ export default function OnboardingPage() {
     const savedContext = sessionStorage.getItem('ablemind-selected-context');
     if (user && savedContext) {
       sessionStorage.removeItem('ablemind-selected-context'); // Clean up
-      router.push(`/assessment?context=${savedContext}`);
+      router.push(`/assessment?context=${encodeURIComponent(savedContext)}`);
     }
   }, [user, router]);
 
@@ -59,13 +60,18 @@ export default function OnboardingPage() {
     if (!selectedContext) return;
 
     if (user) {
-      router.push(`/assessment?context=${selectedContext}`);
+      router.push(`/assessment?context=${encodeURIComponent(selectedContext)}`);
     } else {
       // If user is not logged in, save context and redirect to login.
       sessionStorage.setItem('ablemind-selected-context', selectedContext);
       router.push('/login');
     }
   };
+
+  const handleSelectContext = (option: ContextOption) => {
+    setSelectedContext(option.description);
+    setSelectedContextTitle(option.title);
+  }
 
   if (isUserLoading) {
      return (
@@ -94,10 +100,10 @@ export default function OnboardingPage() {
           {contextOptions.map((option) => (
             <Card
               key={option.id}
-              onClick={() => setSelectedContext(option.title)}
+              onClick={() => handleSelectContext(option)}
               className={cn(
                 'cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1',
-                selectedContext === option.title
+                selectedContextTitle === option.title
                   ? 'ring-2 ring-primary shadow-lg border-primary'
                   : 'border-border'
               )}

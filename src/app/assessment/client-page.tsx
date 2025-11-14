@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -64,11 +65,12 @@ export default function AssessmentClientPage() {
       router.push('/');
       return;
     }
-    setContext(contextParam);
+    const decodedContext = decodeURIComponent(contextParam);
+    setContext(decodedContext);
 
     const fetchInitialChallenge = async () => {
       setIsLoading(true);
-      const result = await getInitialChallenge(contextParam);
+      const result = await getInitialChallenge(decodedContext);
       if (result.success && result.challenge) {
         setChallenges([result.challenge]);
         setChallengeStartTime(Date.now());
