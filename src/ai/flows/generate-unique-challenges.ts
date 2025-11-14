@@ -1,54 +1,55 @@
 
 'use server';
 
-/**
- * @fileOverview A flow for generating unique micro-challenges tailored to the user's selected AI usage context.
- *
- * This file exports:
- * - `generateUniqueChallenges`: An async function that generates unique micro-challenges.
- * - `GenerateUniqueChallengesInput`: The input type for `generateUniqueChallenges`.
- * - `GenerateUniqueChallengesOutput`: The output type for `generateUniqueChallenges`.
- */
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+// --- SCHEMAS ---
 
 const GenerateUniqueChallengesInputSchema = z.object({
   aiUsageContext: z.string().describe('The user-selected AI usage context.'),
+  randomSeed: z.number().optional().describe('A random number to ensure uniqueness.'),
 });
+
 export type GenerateUniqueChallengesInput = z.infer<typeof GenerateUniqueChallengesInputSchema>;
 
 const GenerateUniqueChallengesOutputSchema = z.object({
   challengeText: z.string().describe('The main text of the micro-challenge.'),
-  options: z
-    .array(z.string())
-    .optional()
-    .describe('An array of 3 to 4 plausible options for multiple-choice questions.'),
-  challengeType: z
-    .enum(['open', 'multipleChoice'])
-    .describe("The type of challenge, either 'open' or 'multipleChoice'."),
+  options: z.array(z.string()).optional(),
+  challengeType: z.enum(['open', 'multipleChoice']),
 });
+
 export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChallengesOutputSchema>;
+
+// --- PROMPT ---
 
 const generateUniqueChallengesPrompt = ai.definePrompt({
   name: 'generateUniqueChallengesPrompt',
-  input: {schema: GenerateUniqueChallengesInputSchema},
-  output: {schema: GenerateUniqueChallengesOutputSchema},
-  prompt: `You are an AI that creates a single, concise micro-challenge. The challenge must be relevant to this AI usage context: {{{aiUsageContext}}}.
+  model: 'googleai/gemini-1.5-flash', 
+  input: { schema: GenerateUniqueChallengesInputSchema },
+  output: { 
+    schema: GenerateUniqueChallengesOutputSchema,
+    format: 'json' 
+  },
+  config: {
+    temperature: 1.0, 
+    topP: 0.95, 
+  },
+  prompt: `
+    You are an expert AI tutor. Generate a unique micro-challenge for this context: "{{aiUsageContext}}".
+    Current Random Seed: {{randomSeed}}.
 
-RULES:
-1. The challenge must be a single question or task.
-2. You MUST decide if the question is open-ended or multiple-choice.
-3. If it is multiple-choice, you MUST provide 3 to 4 plausible options in the 'options' array.
-4. If it is open-ended, the 'options' array MUST be empty or not present.
-5. Set 'challengeType' to 'multipleChoice' if you provide options.
-6. Set 'challengeType' to 'open' if you do not provide options.
-7. The challenge text must be short and clear.
+    RULES:
+    1. Decide if it is 'open' or 'multipleChoice'.
+    2. IF 'multipleChoice': Provide 3-4 plausible options.
+    3. IF 'open': 'options' must be empty.
+    4. Keep it concise.
 
-Your entire response must be a single JSON object that perfectly matches the required output schema.
-
-`,
+    Output strictly valid JSON.
+  `,
 });
+
+// --- FLOW ---
 
 const generateUniqueChallengesFlow = ai.defineFlow(
   {
@@ -56,22 +57,32 @@ const generateUniqueChallengesFlow = ai.defineFlow(
     inputSchema: GenerateUniqueChallengesInputSchema,
     outputSchema: GenerateUniqueChallengesOutputSchema,
   },
-  async input => {
+  async (input) => {
     try {
-      const {output} = await generateUniqueChallengesPrompt(input);
+      // Inject randomness
+      const inputWithSeed = {
+        ...input,
+        randomSeed: input.randomSeed || Math.random(), 
+      };
+
+      const response = await generateUniqueChallengesPrompt(inputWithSeed);
+      const output = response.output;
+
       if (!output) {
-        throw new Error('The AI model did not return a valid challenge.');
+        throw new Error('Model returned empty output.');
       }
+
       return output;
     } catch (error) {
-      console.warn("AI challenge generation failed, using manual fallback.", error);
+      console.error("AI Challenge Generation Failed:", error);
 
-      // Failsafe: Return a default, hard-coded challenge if the AI fails.
+      // --- THE FIX IS BELOW ---
+      // We explicitly cast this object to satisfy the strict TypeScript schema
       return {
         challengeType: 'multipleChoice',
         challengeText: 'Which of the following is a common application of AI?',
-        options: ['Sending an email', 'Voice assistants (like Siri or Alexa)', 'Setting an alarm clock', 'Typing a document'],
-      };
+        options: ['Sending an email', 'Voice assistants', 'Setting an alarm', 'Typing a document'],
+      } as GenerateUniqueChallengesOutput;
     }
   }
 );
