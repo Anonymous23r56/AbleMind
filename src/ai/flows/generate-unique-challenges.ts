@@ -1,23 +1,13 @@
-
 'use server';
 
-/**
- * @fileOverview A flow that generates unique micro-challenges for the AbleMind assessment.
- *
- * This file defines the AI-powered flow for creating personalized micro-challenges
- * based on a user's selected AI usage context. It includes a random seed to
- * ensure that the generated challenges are unique for each session.
- *
- * - generateUniqueChallenges: The main function exported to be used by server actions.
- * - GenerateUniqueChallengesInput: The Zod schema for the input to the flow.
- * - GenerateUniqueChallengesOutput: The Zod schema for the output from the flow.
- */
+import { CohereClient } from 'cohere-ai';
+import { z } from 'zod'; // Use 'zod'
 
-import { ai } from '@/ai';
-import { z } from 'genkit';
+const cohere = new CohereClient({
+  token: process.env.CO_API_KEY, // Use CO_API_KEY
+});
 
 // --- SCHEMAS ---
-
 const GenerateUniqueChallengesInputSchema = z.object({
   aiUsageContext: z.string().describe('The user-selected AI usage context.'),
   randomSeed: z.number().optional().describe('A random number to ensure uniqueness.'),
@@ -33,74 +23,59 @@ const GenerateUniqueChallengesOutputSchema = z.object({
 
 export type GenerateUniqueChallengesOutput = z.infer<typeof GenerateUniqueChallengesOutputSchema>;
 
-// --- PROMPT ---
-
-const generateUniqueChallengesPrompt = ai.definePrompt({
-  name: 'generateUniqueChallengesPrompt',
-  input: { schema: GenerateUniqueChallengesInputSchema },
-  output: {
-    schema: GenerateUniqueChallengesOutputSchema,
-  },
-  config: {
-    temperature: 1.0, 
-    topP: 0.95, 
-  },
-  prompt: `
-    You are an expert AI tutor. Generate a unique micro-challenge for this context: "{{aiUsageContext}}".
-    Current Random Seed: {{randomSeed}}.
+export async function generateUniqueChallenges(
+  input: GenerateUniqueChallengesInput
+): Promise<GenerateUniqueChallengesOutput> {
+  
+  const prompt = `
+    You are an expert AI tutor. Generate a single micro-challenge relevant to this context: "${input.aiUsageContext}"
+    Use the random seed "${input.randomSeed}" to ensure you provide variety.
 
     RULES:
-    1. Decide if it is 'open' or 'multipleChoice'.
+    1. You MUST RANDOMLY decide if the challenge is 'open' (where the user types the answer) or 'multipleChoice'. Aim for a mix. Do not just pick multipleChoice every time.
     2. IF 'multipleChoice': Provide 3-4 plausible options.
-    3. IF 'open': 'options' must be empty.
-    4. Keep it concise.
+    3. IF 'open': 'options' array must be empty.
+    4. Keep 'challengeText' concise.
 
-    Output strictly valid JSON that conforms to the provided schema.
-  `,
-});
-
-// --- FLOW ---
-
-const generateUniqueChallengesFlow = ai.defineFlow(
-  {
-    name: 'generateUniqueChallengesFlow',
-    inputSchema: GenerateUniqueChallengesInputSchema,
-    outputSchema: GenerateUniqueChallengesOutputSchema,
-  },
-  async (input) => {
-    try {
-      // Inject randomness to ensure a different challenge is generated each time.
-      const inputWithSeed = {
-        ...input,
-        randomSeed: input.randomSeed || Math.random(), 
-      };
-
-      const response = await generateUniqueChallengesPrompt(inputWithSeed);
-      const output = response.output;
-
-      if (!output) {
-        throw new Error('Model returned empty output.');
-      }
-
-      return output;
-    } catch (error) {
-      console.error("AI Challenge Generation Failed:", error);
-      
-      // Return a failsafe question if the AI call fails for any reason.
-      // We explicitly cast this object to satisfy the strict TypeScript schema.
-      return {
-        challengeType: 'multipleChoice',
-        challengeText: 'Which of the following is a common application of AI in daily life?',
-        options: ['Sending an email', 'Voice assistants (like Siri or Alexa)', 'Setting a standard alarm clock', 'Typing a document in a text editor'],
-      } as GenerateUniqueChallengesOutput;
+    Your response MUST be ONLY the raw JSON object. Do not write any other text.
+    Your response must perfectly match this Zod schema:
+    {
+      "challengeText": "...",
+      "options": ["...", "..."],
+      "challengeType": "..."
     }
-  }
-);
+  `;
 
-/**
- * The main exported function that server actions should call.
- * This correctly invokes the Genkit flow to generate a challenge.
- */
-export async function generateUniqueChallenges(input: GenerateUniqueChallengesInput): Promise<GenerateUniqueChallengesOutput> {
-  return generateUniqueChallengesFlow(input);
+  try {
+    const response = await cohere.chat({
+      model: 'command-r-08-2024', // The correct model
+      message: prompt,
+      temperature: 1.0,
+      p: 0.95,
+      seed: input.randomSeed ? Math.floor(input.randomSeed * 10000) : undefined,
+    });
+
+    const output = response.text;
+
+    if (!output) {
+      throw new Error('Cohere model returned empty output.');
+    }
+
+    const jsonMatch = output.match(/\{[\s\S]*\}/); // Safe JSON parsing
+    
+    if (!jsonMatch) {
+      throw new Error('AI did not return valid JSON.');
+    }
+
+    return JSON.parse(jsonMatch[0]) as GenerateUniqueChallengesOutput;
+
+  } catch (error) {
+    console.error("AI Challenge Generation Failed (Cohere):", error);
+    
+    return {
+      challengeType: 'multipleChoice',
+      challengeText: 'Which of the following is a common application of AI in daily life?',
+      options: ['Setting a standard alarm clock', 'Voice assistants (like Siri or Alexa)', 'Sending an email', 'Typing a document in a text editor'],
+    } as GenerateUniqueChallengesOutput;
+  }
 }
